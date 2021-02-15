@@ -5,6 +5,7 @@ import pathlib
 class PreviewFrame(Frame):
     def __init__(self, parentObject, background):
         Frame.__init__(self, parentObject, background=background, relief=RIDGE, borderwidth=10)
+        self.grid(row=2, column=0, sticky="nsew")
         self.canvas = Canvas(
             self, borderwidth=0, background=background, highlightthickness=0
         )
@@ -32,12 +33,12 @@ class PreviewFrame(Frame):
 
     def onFrameConfigure(self, event):
         # Reset the scroll region to encompass the inner internal_frame
-        print("onFrameConfigure")
+        # print("onFrameConfigure")
         self.canvas.configure(scrollregion=self.canvas.bbox("all"))
 
     def onCanvasConfigure(self, event):
         # Resize the inner internal_frame to match the canvas
-        print("onConvasConfigure")
+        # print("onConvasConfigure")
         minHeight = self.internal_frame.winfo_reqheight()
 
 
