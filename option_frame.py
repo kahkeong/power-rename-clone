@@ -1,12 +1,17 @@
 import tkinter as tk
 
 
-class OptionFrame(tk.Frame):
+class OptionFrame(tk.LabelFrame):
     def __init__(self, parentObject, background):
-        tk.Frame.__init__(
-            self, parentObject, background=background, relief=tk.RIDGE, borderwidth=10
+        tk.LabelFrame.__init__(
+            self,
+            parentObject,
+            text="Options",
+            # background=background,
+            relief=tk.GROOVE,
+            borderwidth=5,
         )
-        self.grid(row=1, column=0, sticky="ew")
+        self.grid(row=1, column=0, sticky="ew", padx=10, pady=10)
         self.alist = [
             "Use Regular Expressions",
             "Match All Occurences",
@@ -21,9 +26,6 @@ class OptionFrame(tk.Frame):
             "Make Lowercase",
             "Make Titlecase",
         ]
-
-        self.lbl_options = tk.Label(master=self, text="Options")
-        self.lbl_options.grid(row=0, column=0, columnspan=2, sticky="w")
 
         values = []
         for index, name in enumerate(self.alist[:6]):

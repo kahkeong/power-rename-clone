@@ -2,10 +2,19 @@ from tkinter import *
 import pathlib
 
 
-class PreviewFrame(Frame):
+class PreviewFrame(LabelFrame):
     def __init__(self, parentObject, background):
-        Frame.__init__(self, parentObject, background=background, relief=RIDGE, borderwidth=10)
-        self.grid(row=2, column=0, sticky="nsew")
+        LabelFrame.__init__(
+            self,
+            parentObject,
+            text="Preview",
+            # background=background,
+            relief=GROOVE,
+            borderwidth=5,
+        )
+        # update this
+        background = "white"
+        self.grid(row=2, column=0, sticky="nsew", ipadx=10, pady=10, padx=10)
         self.canvas = Canvas(
             self, borderwidth=0, background=background, highlightthickness=0
         )
@@ -29,7 +38,7 @@ class PreviewFrame(Frame):
         self.canvas.bind("<Configure>", self.onCanvasConfigure)
 
     def onMouseWheel(self, event):
-        self.canvas.yview_scroll(int(-1*(event.delta/120)), "units")
+        self.canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
 
     def onFrameConfigure(self, event):
         # Reset the scroll region to encompass the inner internal_frame
@@ -40,7 +49,6 @@ class PreviewFrame(Frame):
         # Resize the inner internal_frame to match the canvas
         # print("onConvasConfigure")
         minHeight = self.internal_frame.winfo_reqheight()
-
 
         if self.winfo_height() >= minHeight:
             newHeight = self.winfo_height()
@@ -70,7 +78,7 @@ class ItemList(object):
         # create var to represent states
         int_var = IntVar()
 
-        cb = Checkbutton(self.innerFrame, text=text, variable=int_var)
+        cb = Checkbutton(self.innerFrame, text=text, variable=int_var, bg="white")
         cb.grid(
             row=self.innerFrame.grid_size()[1],
             column=0,
@@ -97,8 +105,6 @@ class ItemList(object):
             self.add_item(str(item.name), level)
 
 
-
-
 if __name__ == "__main__":
     deviceBkgColor = "#FFFFFF"
     # deviceBkgColor = None
@@ -114,5 +120,4 @@ if __name__ == "__main__":
     item_list = ItemList(preview_frame, preview_frame.internal_frame)
     item_list.populate()
 
-
-    root.mainloop()  
+    root.mainloop()

@@ -1,10 +1,9 @@
 import tkinter as tk
 
+
 class BottomFrame(tk.Frame):
     def __init__(self, parentObject, background):
-        tk.Frame.__init__(
-            self, parentObject, background=background, relief=tk.RIDGE, borderwidth=10
-        )
+        tk.Frame.__init__(self, parentObject, borderwidth=5)
         self.grid(row=4, column=0, sticky="ew")
         self.grid_columnconfigure(0, weight=1)
 
