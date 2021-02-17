@@ -1,9 +1,10 @@
 import tkinter as tk
 
+
 class DebugFrame(tk.Frame):
-    def __init__(self, item_list, parentObject, background):
+    def __init__(self, item_list, parent_object, background):
         tk.Frame.__init__(
-            self, parentObject, background=background, relief=tk.RIDGE, borderwidth=10
+            self, parent_object, background=background, relief=tk.RIDGE, borderwidth=10
         )
         self.item_list = item_list
         self.grid(row=5, column=0, sticky="ew")

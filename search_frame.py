@@ -2,15 +2,17 @@ import tkinter as tk
 
 
 class SearchFrame(tk.LabelFrame):
-    def __init__(self, parentObject, background):
+    def __init__(self, item_list, parent_object, background):
         tk.LabelFrame.__init__(
             self,
-            parentObject,
+            parent_object,
             text="Enter the criteria below to rename the items",
             # background=background,
             relief=tk.GROOVE,
             borderwidth=5,
         )
+        self.item_list = item_list
+
         self.grid(row=0, column=0, sticky="ew", pady=10, padx=10)
         self.columnconfigure(1, weight=1)
 
@@ -33,7 +35,7 @@ class SearchFrame(tk.LabelFrame):
         entry_replace.grid(row=2, column=1, sticky="ew", padx=(0, 10))
 
     def search_callback(self, *args):
-        print(self.search_value.get())
+        self.item_list.update_search(self.search_value.get())
 
     def replace_callback(self, *args):
-        print(self.replace_value.get())
+        self.item_list.update_replace(self.replace_value.get())

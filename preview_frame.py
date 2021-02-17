@@ -1,20 +1,20 @@
 import tkinter as tk
-import pathlib
-from tkinter.constants import GROOVE
 
 
 class PreviewFrame(tk.LabelFrame):
-    def __init__(self, parentObject, background):
+    def __init__(self, item_list, parent_object, background):
         tk.LabelFrame.__init__(
             self,
-            parentObject,
+            parent_object,
             text="Preview",
             # background=background,
-            relief=GROOVE,
+            relief=tk.GROOVE,
             borderwidth=5,
         )
         # update this
         background = "white"
+
+        self.item_list = item_list
         self.grid(row=2, column=0, sticky="nsew", ipadx=10, pady=10, padx=10)
         self.canvas = tk.Canvas(
             self,
@@ -33,7 +33,12 @@ class PreviewFrame(tk.LabelFrame):
         self.lbl_original = tk.Label(master=self.internal_frame, text="Original")
         self.lbl_original.grid(row=0, column=0, sticky="ew")
 
-        self.lbl_renamed = tk.Button(master=self.internal_frame, text="Renamed", bd=5)
+        self.lbl_renamed = tk.Button(
+            master=self.internal_frame,
+            text="Renamed",
+            bd=5,
+            command=self.on_click_renamed,
+        )
         self.lbl_renamed.grid(row=0, column=1, sticky="ew")
 
         self.canvas.configure(yscrollcommand=self.vsb.set)
@@ -50,113 +55,44 @@ class PreviewFrame(tk.LabelFrame):
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(0, weight=1)
 
-        self.canvas.bind_all("<MouseWheel>", self.onMouseWheel)
-        self.internal_frame.bind("<Configure>", self.onFrameConfigure)
-        self.canvas.bind("<Configure>", self.onCanvasConfigure)
+        self.canvas.bind_all("<MouseWheel>", self.on_mouse_wheel)
+        self.internal_frame.bind("<Configure>", self.on_frame_configure)
+        self.canvas.bind("<Configure>", self.on_canvas_configure)
 
-    def onMouseWheel(self, event):
+    def on_click_renamed(self):
+        print("renamed clicked")
+        self.item_list.update_filter()
+        pass
+
+    def on_mouse_wheel(self, event):
         self.canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
 
-    def onFrameConfigure(self, event):
+    def on_frame_configure(self, event):
         # Reset the scroll region to encompass the inner internal_frame
-        # print("onFrameConfigure")
+        # print("on_frame_configure")
         self.canvas.configure(scrollregion=self.canvas.bbox("all"))
 
-    def onCanvasConfigure(self, event):
+    def on_canvas_configure(self, event):
         # Resize the inner frame to match the canvas
-        minWidth = self.internal_frame.winfo_reqwidth()
-        minHeight = self.internal_frame.winfo_reqheight()
+        min_width = self.internal_frame.winfo_reqwidth()
+        min_height = self.internal_frame.winfo_reqheight()
 
-        if self.winfo_width() >= minWidth:
-            newWidth = self.winfo_width()
+        if self.winfo_width() >= min_width:
+            new_width = self.winfo_width()
             # Hide the scrollbar when not needed
             # self.hsb.grid_remove()
         else:
-            newWidth = minWidth
+            new_width = min_width
             # Show the scrollbar when needed
             # self.hsb.grid()
 
-        if self.winfo_height() >= minHeight:
-            newHeight = self.winfo_height()
+        if self.winfo_height() >= min_height:
+            new_height = self.winfo_height()
             # Hide the scrollbar when not needed
             self.vsb.grid_remove()
         else:
-            newHeight = minHeight
+            new_height = min_height
             # Show the scrollbar when needed
             self.vsb.grid()
 
-        self.canvas.itemconfig(self.window, width=newWidth, height=newHeight)
-
-
-class ItemList(object):
-    def __init__(self, scrollFrame, innerFrame):
-        self.widget_list = []
-        self.widget_list2 = []
-        self.innerFrame = innerFrame
-        self.scrollFrame = scrollFrame
-
-        # Keep a dummy empty row if the list is empty
-        self.placeholder = tk.Label(self.innerFrame, text=" ")
-        self.placeholder.grid(row=0, column=0)
-
-    # add new entry and update layout
-    def add_item(self, text, level):
-        self.placeholder.grid_remove()
-        # create var to represent states
-        int_var = tk.IntVar()
-
-        cb = tk.Checkbutton(self.innerFrame, text=text, variable=int_var, bg="yellow")
-        cb.grid(
-            row=len(self.widget_list) + 1,
-            column=0,
-            ipadx=(20 * level,),
-            pady=1,
-            sticky="w",
-        )
-
-        cb2 = tk.Checkbutton(self.innerFrame, text=text, variable=int_var, bg="green")
-        cb2.grid(
-            row=len(self.widget_list2) + 1,
-            column=1,
-            ipadx=(20 * level,),
-            pady=1,
-            sticky="w",
-        )
-        # print(self.innerFrame.grid_size())
-
-        self.widget_list.append(cb)
-        self.widget_list2.append(cb2)
-
-    def populate(self):
-        self.recursive(pathlib.Path("."), 0)
-        self.innerFrame.update_idletasks()
-        self.scrollFrame.onCanvasConfigure(None)
-
-    def recursive(self, path, level):
-        dir_list = [x for x in path.iterdir() if x.is_dir()]
-        for item in dir_list:
-            self.add_item(str(item.name), level)
-            new_path = pathlib.Path(f"{item.resolve()}")
-            self.recursive(new_path, level + 1)
-
-        path_list = [x for x in path.iterdir() if x.is_file()]
-        for item in path_list:
-            self.add_item(str(item.name), level)
-
-
-if __name__ == "__main__":
-    deviceBkgColor = "#FFFFFF"
-    # deviceBkgColor = None
-    root = tk()  # Makes the window
-    root.grid_rowconfigure(0, weight=1)
-    root.grid_columnconfigure(0, weight=1)
-    root.wm_title("Title")  # Makes the title that will appear in the top left
-    root.config(background=deviceBkgColor)
-
-    preview_frame = PreviewFrame(root, background=deviceBkgColor)
-    preview_frame.grid(row=0, column=0, sticky="nsew")
-
-    item_list = ItemList(preview_frame, preview_frame.internal_frame)
-    item_list.populate()
-
-    root.mainloop()
+        self.canvas.itemconfig(self.window, width=new_width, height=new_height)

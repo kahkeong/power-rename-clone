@@ -2,10 +2,10 @@ import tkinter as tk
 
 
 class OptionFrame(tk.LabelFrame):
-    def __init__(self, parentObject, background):
+    def __init__(self, parent_object, background):
         tk.LabelFrame.__init__(
             self,
-            parentObject,
+            parent_object,
             text="Options",
             # background=background,
             relief=tk.GROOVE,
