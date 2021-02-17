@@ -15,7 +15,7 @@ window.title("PowerRename Clone")
 
 window.columnconfigure(0, minsize=300, weight=1)
 window.rowconfigure(2, minsize=300, weight=1)
-
+print('hello')
 # search frame
 frame_search = SearchFrame(parentObject=window, background="green")
 

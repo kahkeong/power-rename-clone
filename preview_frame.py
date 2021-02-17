@@ -1,10 +1,11 @@
-from tkinter import *
+import tkinter as tk
 import pathlib
+from tkinter.constants import GROOVE
 
 
-class PreviewFrame(LabelFrame):
+class PreviewFrame(tk.LabelFrame):
     def __init__(self, parentObject, background):
-        LabelFrame.__init__(
+        tk.LabelFrame.__init__(
             self,
             parentObject,
             text="Preview",
@@ -15,19 +16,35 @@ class PreviewFrame(LabelFrame):
         # update this
         background = "white"
         self.grid(row=2, column=0, sticky="nsew", ipadx=10, pady=10, padx=10)
-        self.canvas = Canvas(
-            self, borderwidth=0, background=background, highlightthickness=0
+        self.canvas = tk.Canvas(
+            self,
+            borderwidth=0,
+            background=background,
+            highlightthickness=0,
         )
-        self.internal_frame = Frame(self.canvas, background=background)
-        self.vsb = Scrollbar(
+        self.internal_frame = tk.Frame(self.canvas, background=background)
+        self.vsb = tk.Scrollbar(
             self, orient="vertical", command=self.canvas.yview, background=background
         )
 
+        self.internal_frame.grid_columnconfigure(0, weight=1)
+        self.internal_frame.grid_columnconfigure(1, weight=1)
+
+        self.lbl_original = tk.Label(master=self.internal_frame, text="Original")
+        self.lbl_original.grid(row=0, column=0, sticky="ew")
+
+        self.lbl_renamed = tk.Button(master=self.internal_frame, text="Renamed", bd=5)
+        self.lbl_renamed.grid(row=0, column=1, sticky="ew")
+
         self.canvas.configure(yscrollcommand=self.vsb.set)
-        self.canvas.grid(row=0, column=0, sticky=N + S + E + W)
-        self.vsb.grid(row=0, column=1, sticky=N + S)
+        self.canvas.grid(row=0, column=0, sticky="nsew")
+        self.vsb.grid(row=0, column=2, sticky="ns")
         self.window = self.canvas.create_window(
-            0, 0, window=self.internal_frame, anchor="nw", tags="self.internal_frame"
+            0,
+            0,
+            window=self.internal_frame,
+            anchor="nw",
+            tags="self.internal_frame",
         )
 
         self.grid_columnconfigure(0, weight=1)
@@ -46,9 +63,18 @@ class PreviewFrame(LabelFrame):
         self.canvas.configure(scrollregion=self.canvas.bbox("all"))
 
     def onCanvasConfigure(self, event):
-        # Resize the inner internal_frame to match the canvas
-        # print("onConvasConfigure")
+        # Resize the inner frame to match the canvas
+        minWidth = self.internal_frame.winfo_reqwidth()
         minHeight = self.internal_frame.winfo_reqheight()
+
+        if self.winfo_width() >= minWidth:
+            newWidth = self.winfo_width()
+            # Hide the scrollbar when not needed
+            # self.hsb.grid_remove()
+        else:
+            newWidth = minWidth
+            # Show the scrollbar when needed
+            # self.hsb.grid()
 
         if self.winfo_height() >= minHeight:
             newHeight = self.winfo_height()
@@ -59,34 +85,47 @@ class PreviewFrame(LabelFrame):
             # Show the scrollbar when needed
             self.vsb.grid()
 
-        self.canvas.itemconfig(self.window, height=newHeight)
+        self.canvas.itemconfig(self.window, width=newWidth, height=newHeight)
 
 
 class ItemList(object):
     def __init__(self, scrollFrame, innerFrame):
         self.widget_list = []
+        self.widget_list2 = []
         self.innerFrame = innerFrame
         self.scrollFrame = scrollFrame
 
         # Keep a dummy empty row if the list is empty
-        self.placeholder = Label(self.innerFrame, text=" ")
+        self.placeholder = tk.Label(self.innerFrame, text=" ")
         self.placeholder.grid(row=0, column=0)
 
     # add new entry and update layout
     def add_item(self, text, level):
         self.placeholder.grid_remove()
         # create var to represent states
-        int_var = IntVar()
+        int_var = tk.IntVar()
 
-        cb = Checkbutton(self.innerFrame, text=text, variable=int_var, bg="white")
+        cb = tk.Checkbutton(self.innerFrame, text=text, variable=int_var, bg="yellow")
         cb.grid(
-            row=self.innerFrame.grid_size()[1],
+            row=len(self.widget_list) + 1,
             column=0,
             ipadx=(20 * level,),
             pady=1,
             sticky="w",
         )
+
+        cb2 = tk.Checkbutton(self.innerFrame, text=text, variable=int_var, bg="green")
+        cb2.grid(
+            row=len(self.widget_list2) + 1,
+            column=1,
+            ipadx=(20 * level,),
+            pady=1,
+            sticky="w",
+        )
+        # print(self.innerFrame.grid_size())
+
         self.widget_list.append(cb)
+        self.widget_list2.append(cb2)
 
     def populate(self):
         self.recursive(pathlib.Path("."), 0)
@@ -108,7 +147,7 @@ class ItemList(object):
 if __name__ == "__main__":
     deviceBkgColor = "#FFFFFF"
     # deviceBkgColor = None
-    root = Tk()  # Makes the window
+    root = tk()  # Makes the window
     root.grid_rowconfigure(0, weight=1)
     root.grid_columnconfigure(0, weight=1)
     root.wm_title("Title")  # Makes the title that will appear in the top left
