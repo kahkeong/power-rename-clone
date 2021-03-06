@@ -22,7 +22,9 @@ frame_search = SearchFrame(
 )
 
 # option frame
-frame_option = OptionFrame(parent_object=window, background="purple")
+frame_option = OptionFrame(
+    item_list=item_list, parent_object=window, background="purple"
+)
 
 # preview frame
 

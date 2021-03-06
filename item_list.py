@@ -1,11 +1,15 @@
 import tkinter as tk
 import pathlib
+import logging
+
+logging.basicConfig(level=logging.DEBUG)
 
 
 class ItemList(object):
     def __init__(self):
         self.check_button_list = []
         self.lbl_renamed_list = []
+        self.path_object_list = []
         self.search = ""
         self.replace = ""
         self.show_all = True
@@ -18,7 +22,7 @@ class ItemList(object):
 
     def update_renamed(self):
         """
-        Update the list of items that are showing at the Renamed column
+        Update the list of items that are showing at the renamed column based on the selected options, the searched value and replace with value
         """
         for check_button, label in zip(self.check_button_list, self.lbl_renamed_list):
             item_name = check_button["text"]
@@ -30,6 +34,9 @@ class ItemList(object):
                 pass
             else:
                 label.config(text="")
+
+            # first, there are some options which determine whether a name is eligible to be renamed
+            # after we go through all the filter options, if the filtered name is not empty, then we can proceed to determine the renamed name of the original name
 
     def update_search(self, value):
         """
@@ -105,45 +112,85 @@ class ItemList(object):
 
         return callback
 
-    def add_item(self, text, level):
-        """Add new item to canvas frame """
-        # used to represent value of checkbox , 1 or 0, set default to selected
-        int_var = tk.IntVar(value=1)
+    def display_widgets(self):
+        # for item
+        for index, (check_button, lbl_renamed) in enumerate(
+            zip(self.check_button_list, self.lbl_renamed_list)
+        ):
+            _, level = self.path_object_list[index]
 
-        original = tk.Checkbutton(
-            self.canvas_frame,
-            text=text,
-            variable=int_var,
-            bg="yellow",
-            command=self.check_button_callback(len(self.check_button_list)),
-        )
-        # set int_var as attribute of original
-        original.val = int_var
+            check_button.grid(
+                # +1 to exclude the first row which contain the columns name
+                row=index + 1,
+                column=0,
+                ipadx=(20 * level,),
+                pady=1,
+                sticky="w",
+            )
+            lbl_renamed.grid(
+                row=index + 1,
+                column=1,
+                sticky="w",
+            )
 
-        original.grid(
-            # +1 to exclude the first row which contain the columns name
-            row=len(self.check_button_list) + 1,
-            column=0,
-            ipadx=(20 * level,),
-            pady=1,
-            sticky="w",
-        )
+    def create_widgets(self):
+        """Create all widgets from the populated path objects list that we have gotten"""
 
-        renamed = tk.Label(self.canvas_frame, text="", bg="green")
-        renamed.grid(
-            row=len(self.lbl_renamed_list) + 1,
-            column=1,
-            sticky="w",
-        )
+        for path_object, _ in self.path_object_list:
+            # used to represent value of checkbox , 1 or 0, set default to selected
+            int_var = tk.IntVar(value=1)
+            check_button = tk.Checkbutton(
+                self.canvas_frame,
+                text=path_object.name,
+                variable=int_var,
+                bg="yellow",
+                command=self.check_button_callback(len(self.check_button_list)),
+            )
+            # set int_var as attribute of check_button
+            check_button.val = int_var
 
-        self.check_button_list.append(original)
-        self.lbl_renamed_list.append(renamed)
+            lbl_renamed = tk.Label(self.canvas_frame, text="", bg="green")
+
+            self.check_button_list.append(check_button)
+            self.lbl_renamed_list.append(lbl_renamed)
+
+    def option_make_uppercase(self, value):
+        return value.upper()
+
+    def option_make_lowercase(self, value):
+        return value.lower()
+
+    def option_make_titlecase(self, value):
+        return value.titlecase()
+
+    def option_item_name_(self, pathlib_object):
+        return pathlib_object.stem
+
+    def option_item_extension(self, pathlib_object):
+        return pathlib_object.suffix
+
+    def option_enumerate_item(self, pathlib_object, index):
+        """
+        Appends a numeric suffix to file names that were modified in the operation. For example: test.jpg -> test (1).jpg
+        """
+
+        # if item name is test.tar.gz, it should be renamed to test (1).tar.gz instead of test.tar (1).gz
+        path_suffixes = pathlib_object.suffixes
+        value = f"pathlib_object.stem ({index})" + "".join(path_suffixes)
+        return value
+
+    def update_option(self, options, rules):
+        print(f"update option: {options}")
+        for index, option in enumerate(options):
+            if option.get():
+                print(rules[index])
 
     def get_items(self):
         self.__get_items(
             pathlib.Path("C:/Users/kahkeong/Desktop/Code/power-rename-clone/test"), 0
         )
-
+        self.create_widgets()
+        self.display_widgets()
         self.update_selected_count()
         self.update_renaming_count()
         # ensure the UI is updated
@@ -152,19 +199,19 @@ class ItemList(object):
 
     def __get_items(self, path, level):
         """
-        Starting from root, get_itemsly go into sub folders and get the folders and files name.
+        Starting from root, get_items go into sub folders and retrieve the pathlib object that represent each of the folders and files.
         By default, process the folders first before files
 
         Keyword arguments:
-        path - path to a folder
+        path - path object of a folder
         level - level of this folder starting from root
         """
-        dir_list = [x for x in path.iterdir() if x.is_dir()]
-        for dir in dir_list:
-            self.add_item(str(dir.name), level)
-            new_path = pathlib.Path(f"{dir.resolve()}")
+        dir_path_objects = [x for x in path.iterdir() if x.is_dir()]
+        for dir_path_object in dir_path_objects:
+            self.path_object_list.append((dir_path_object, level))
+            new_path = pathlib.Path(f"{dir_path_object.resolve()}")
             self.__get_items(new_path, level + 1)
 
-        file_list = [x for x in path.iterdir() if x.is_file()]
-        for file in file_list:
-            self.add_item(str(file.name), level)
+        file_path_objects = [x for x in path.iterdir() if x.is_file()]
+        for file_path_object in file_path_objects:
+            self.path_object_list.append((file_path_object, level))

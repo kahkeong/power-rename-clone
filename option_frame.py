@@ -2,7 +2,7 @@ import tkinter as tk
 
 
 class OptionFrame(tk.LabelFrame):
-    def __init__(self, parent_object, background):
+    def __init__(self, item_list, parent_object, background):
         tk.LabelFrame.__init__(
             self,
             parent_object,
@@ -11,6 +11,7 @@ class OptionFrame(tk.LabelFrame):
             relief=tk.GROOVE,
             borderwidth=5,
         )
+        self.item_list = item_list
         self.grid(row=1, column=0, sticky="ew", padx=10, pady=10)
         self.alist = [
             "Use Regular Expressions",
@@ -27,15 +28,20 @@ class OptionFrame(tk.LabelFrame):
             "Make Titlecase",
         ]
 
-        values = []
-        for index, name in enumerate(self.alist[:6]):
-            value = tk.IntVar()
-            btn_new = tk.Checkbutton(master=self, text=name, variable=value)
-            btn_new.grid(row=index + 1, column=0, sticky="w")
-            values.append(value)
+        ROW_PER_COLUMN = 6
 
-        for index, name in enumerate(self.alist[6:]):
+        values = []
+        for index, name in enumerate(self.alist):
             value = tk.IntVar()
-            btn_new = tk.Checkbutton(master=self, text=name, variable=value)
-            btn_new.grid(row=index + 1, column=1, sticky="w")
+            btn_new = tk.Checkbutton(
+                master=self,
+                text=name,
+                variable=value,
+                command=lambda: self.item_list.update_option(values, self.alist),
+            )
+            btn_new.grid(
+                row=index % ROW_PER_COLUMN,
+                column=(0 + (index // ROW_PER_COLUMN)),
+                sticky="w",
+            )
             values.append(value)
