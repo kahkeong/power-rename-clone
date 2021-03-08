@@ -265,10 +265,11 @@ class ItemList(object):
 
     def get_items(self):
         """
-        Populate the UI with initial state of the progralm, i.e. all file/folder names in the directory of where this program was runned
+        Populate the UI with initial state of the program, i.e. all file/folder names in the directory of where this program was runned
         """
         self._get_items(
-            pathlib.Path("C:/Users/kahkeong/Desktop/Code/power-rename-clone/test"), 0
+            pathlib.Path("C:/Users/kahkeong/Desktop/CKK/From work/multi-docker-master"),
+            0,
         )
         self.create_widgets()
         self.display_widgets()

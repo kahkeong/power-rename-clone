@@ -3,7 +3,7 @@ import webbrowser
 
 
 class BottomFrame(tk.Frame):
-    def __init__(self, parent_object, background):
+    def __init__(self, parent_object):
         tk.Frame.__init__(self, parent_object, borderwidth=5)
         self.parent_object = parent_object
 

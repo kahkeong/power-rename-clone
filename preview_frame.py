@@ -5,16 +5,14 @@ logger = logging.getLogger(__name__)
 
 
 class PreviewFrame(tk.LabelFrame):
-    def __init__(self, item_list, parent_object, background):
+    def __init__(self, item_list, parent_object):
         tk.LabelFrame.__init__(
             self,
             parent_object,
             text="Preview",
-            # background=background,
             relief=tk.GROOVE,
             borderwidth=5,
         )
-        # update this
         background = "white"
 
         self.item_list = item_list

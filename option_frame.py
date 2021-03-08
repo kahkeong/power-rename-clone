@@ -5,12 +5,11 @@ logger = logging.getLogger(__name__)
 
 
 class OptionFrame(tk.LabelFrame):
-    def __init__(self, item_list, parent_object, background):
+    def __init__(self, item_list, parent_object):
         tk.LabelFrame.__init__(
             self,
             parent_object,
             text="Options",
-            # background=background,
             relief=tk.GROOVE,
             borderwidth=5,
         )
@@ -31,7 +30,7 @@ class OptionFrame(tk.LabelFrame):
             "Make Lowercase",
             "Make Titlecase",
         ]
-        self.selected_option = set()
+        self.selected_options = set()
         self.case_change_options = set(
             [
                 "Make Uppercase",
@@ -66,11 +65,11 @@ class OptionFrame(tk.LabelFrame):
             self.buttons[option] = btn_new
 
     def update_options(self, option):
-        is_option_enabled = option in self.selected_option
+        is_option_enabled = option in self.selected_options
 
         # only one of them can be enabled at any point of time
         if option in self.item_name_or_extension_options:
-            self.selected_option -= self.item_name_or_extension_options
+            self.selected_options -= self.item_name_or_extension_options
             for item in self.item_name_or_extension_options:
                 self.buttons[item].val.set(0)
 
@@ -80,11 +79,11 @@ class OptionFrame(tk.LabelFrame):
             # enable it
             else:
                 self.buttons[option].val.set(1)
-                self.selected_option.add(option)
+                self.selected_options.add(option)
 
         # only one of them can be enabled at any point of time
         elif option in self.case_change_options:
-            self.selected_option -= self.case_change_options
+            self.selected_options -= self.case_change_options
             for item in self.case_change_options:
                 self.buttons[item].val.set(0)
 
@@ -94,15 +93,15 @@ class OptionFrame(tk.LabelFrame):
             # enable it
             else:
                 self.buttons[option].val.set(1)
-                self.selected_option.add(option)
+                self.selected_options.add(option)
 
-        elif option in self.selected_option:
-            self.selected_option.remove(option)
+        elif option in self.selected_options:
+            self.selected_options.remove(option)
         else:
-            self.selected_option.add(option)
+            self.selected_options.add(option)
 
         logger.info(
-            f"newly selected option: {option}, enabled options: {self.selected_option}"
+            f"newly selected option: {option}, enabled options: {self.selected_options}"
         )
 
-        self.item_list.update_options(self.selected_option)
+        self.item_list.update_options(self.selected_options)
