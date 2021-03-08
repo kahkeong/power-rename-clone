@@ -1,8 +1,7 @@
 import tkinter as tk
 import pathlib
 import logging
-
-logging.basicConfig(level=logging.DEBUG)
+import re
 
 
 class ItemList(object):
@@ -10,9 +9,11 @@ class ItemList(object):
         self.check_button_list = []
         self.lbl_renamed_list = []
         self.path_object_list = []
+        self.selected_options = []
         self.search = ""
         self.replace = ""
-        self.show_all = True
+        self.show_checked_only = False
+        self.show_renamed_only = False
 
         # reference to objects from other classes assigned at main.py
         self.canvas_frame = None
@@ -24,19 +25,100 @@ class ItemList(object):
         """
         Update the list of items that are showing at the renamed column based on the selected options, the searched value and replace with value
         """
-        for check_button, label in zip(self.check_button_list, self.lbl_renamed_list):
-            item_name = check_button["text"]
+        enumerate_index = 1
 
-            # is selected and search keyword appear in item name
-            if check_button.val.get() and self.search in item_name:
-                new_name = item_name.replace(self.search, self.replace)
+        for (path_object, level), check_button, label in zip(
+            self.path_object_list, self.check_button_list, self.lbl_renamed_list
+        ):
+            skip = False
+            match = True
+            item_name = check_button["text"]
+            new_name = item_name
+
+            # We do filter according to below sequential code, if an item is filtered out, it means it is not eligible to be renamed
+            # Then, we check whether the file/dir match the "search" input, if there is no match, means there is nothing to rename for this file/dir
+
+            # user did not select this file/dir to rename
+            if not check_button.val.get():
+                skip = True
+
+            # path_object match one of the following statements so should not be renamed
+            if "Exclude Folders" in self.selected_options and path_object.is_dir():
+                skip = True
+            elif "Exclude Files" in self.selected_options and path_object.is_file():
+                skip = True
+            elif "Exclude Subfolder Items" in self.selected_options and level >= 1:
+                skip = True
+
+            if skip:
+                logging.info(f"file name: {item_name} is skipped")
+                label.config(text="")
+                continue
+
+            # the scope of the name that shall be renamed
+            if "Item Name Only" in self.selected_options:
+                new_name = path_object.stem
+            elif "Item Extension Only" in self.selected_options:
+                new_name = path_object.suffix
+
+            # built-in "in" function is case sensitive by default
+            if "Case Sensitive" in self.selected_options:
+                if self.search in new_name:
+                    match = True
+                    # by default, build in function "replace" will replace all occurences
+                    if "Match All Occurences" in self.selected_options:
+                        new_name = new_name.replace(self.search, self.replace)
+                    else:
+                        new_name = new_name.replace(self.search, self.replace, 1)
+            else:
+                # since regex is not enabled, escape all special characters
+                search_name = re.escape(self.search)
+                if re.search(search_name, new_name, flags=re.IGNORECASE):
+                    match = True
+                    if "Match All Occurences" in self.selected_options:
+                        new_name = re.sub(
+                            search_name, self.replace, new_name, flags=re.IGNORECASE
+                        )
+                    else:
+                        new_name = re.sub(
+                            search_name, self.replace, new_name, 1, flags=re.IGNORECASE
+                        )
+
+            if not match:
+                logging.info("file name: {item_name} has no match for search input")
+
+            # if one of the following options are valid, means we actually edited either the name (stem) or the extension path,
+            # so we need to add back the name (stem) or the extension
+            if "Item Name Only" in self.selected_options:
+                new_name = new_name + path_object.suffix
+            elif "Item Extension Only" in self.selected_options:
+                new_name = path_object.stem + new_name
+
+            # Note, even if there are no matches, if any one of the case change options match, we will still rename the original name
+            if "Make Uppercase" in self.selected_options:
+                if new_name != new_name.upper():
+                    new_name = new_name.upper()
+            elif "Make Lowercase" in self.selected_options:
+                if new_name != new_name.lower():
+                    new_name = new_name.lower()
+            elif "Make Titlecase" in self.selected_options:
+                if new_name != new_name.title():
+                    new_name = new_name.title()
+
+            if "Enumerate Items" in self.selected_options:
+                if new_name != item_name:
+                    # making the new_name as Path object just to get the stem and suffix more easily
+                    new_path = pathlib.Path(new_name)
+                    new_name = f"{new_path.stem} ({enumerate_index}){new_path.suffix}"
+                    enumerate_index += 1
+
+            if new_name != item_name:
+                logging.info(
+                    f"old name: {item_name} will be renamed to new name: {new_name}"
+                )
                 label.config(text=new_name)
-                pass
             else:
                 label.config(text="")
-
-            # first, there are some options which determine whether a name is eligible to be renamed
-            # after we go through all the filter options, if the filtered name is not empty, then we can proceed to determine the renamed name of the original name
 
     def update_search(self, value):
         """
@@ -49,102 +131,120 @@ class ItemList(object):
 
     def update_replace(self, value):
         """
-        Update the renamed item value. Since no other components will be affected, we just update the renamed value.
+        Update the replace value. Since no other components will be affected, we just need to update the renamed column.
         """
         self.replace = value
         self.update_renamed()
 
-    def update_filter(self):
-        """
-        Trigger to show all selected items or show only items that will be renamed
-        """
-        self.show_all = not self.show_all
-        for check_button, label in zip(self.check_button_list, self.lbl_renamed_list):
-            if self.show_all:
-                check_button.grid()
-                label.grid()
-            else:
-                # not checked
-                if not check_button.val.get():
-                    # grid will hide the widget but the widget will still remember the positions, calling grid() on the widget will show them again
-                    check_button.grid_remove()
-                    label.grid_remove()
-
-        self.update_renaming_count()
-
     def update_selected_count(self):
+        """
+        Update the selected count UI at bottom left corner
+        """
         total = 0
         for check_button in self.check_button_list:
             if check_button.val.get():
                 total += 1
 
         self.lbl_items_selected.config(text=f"Items Selected: {total}")
+        logging.info(f"Selected count: {total}")
 
     def update_renaming_count(self):
+        """
+        Update the renaming count UI at bottom left corner
+        """
         total = 0
         for label in self.lbl_renamed_list:
             if label["text"] != "":
                 total += 1
 
-        print(f"Renaming count: {total}")
         self.lbl_items_renaming.config(text=f"Item Renaming: {total}")
+        logging.info(f"Renaming count: {total}")
 
     def check_button_callback(self, index):
-        """Auxiliary function to encapsulate the index value with the callback function """
+        """Callback for each check button in the original column """
 
-        def callback():
-            check_button = self.check_button_list[index]
-            label = self.lbl_renamed_list[index]
-            print(check_button, index)
+        check_button = self.check_button_list[index]
+        logging.info(f"button, {check_button['text']} clicked")
 
-            # check item
-            if check_button.val.get():
-                label.grid()
-                pass
-            # uncheck item
-            else:
-                label.grid_remove()
+        self.update_renamed()
+        self.update_selected_count()
+        self.update_renaming_count()
+        self.display_widgets()
 
-            # TODO: can make bottom operations to O(1)
-            self.update_renamed()
-            self.update_selected_count()
-            self.update_renaming_count()
+    def update_show_renamed_only(self):
+        """
+        Trigger to show all selected items or show only items that will be renamed
+        """
+        logging.info("called")
+        # only one of them can be True at any time
+        self.show_renamed_only = not self.show_renamed_only
+        self.show_checked_only = False
+        self.display_widgets()
+        self.update_renaming_count()
 
-        return callback
+    def update_show_checked_only(self):
+        """
+        Trigger to show all items or show only checked items
+        """
+        logging.info("called")
+        # only one of them can be True at any time
+        self.show_checked_only = not self.show_checked_only
+        self.show_renamed_only = False
+        self.display_widgets()
 
     def display_widgets(self):
-        # for item
-        for index, (check_button, lbl_renamed) in enumerate(
-            zip(self.check_button_list, self.lbl_renamed_list)
+        """Display the items in both original and renamed columns"""
+        logging.info("called")
+
+        # clear everything on the grid
+        for _, (check_button, lbl_renamed, path_object) in enumerate(
+            zip(self.check_button_list, self.lbl_renamed_list, self.path_object_list)
         ):
-            _, level = self.path_object_list[index]
+            check_button.grid_forget()
+            lbl_renamed.grid_forget()
+
+        # populate the grid
+        line = 0
+        for check_button, lbl_renamed, path_object in zip(
+            self.check_button_list, self.lbl_renamed_list, self.path_object_list
+        ):
+            # show checked rows only
+            if self.show_checked_only and not check_button.val.get():
+                continue
+            # show rows that will be renamed only
+            elif self.show_renamed_only and not lbl_renamed["text"]:
+                continue
+
+            _, level = path_object
 
             check_button.grid(
                 # +1 to exclude the first row which contain the columns name
-                row=index + 1,
+                row=line + 1,
                 column=0,
+                # more left padding for file in inner directories
                 ipadx=(20 * level,),
                 pady=1,
                 sticky="w",
             )
             lbl_renamed.grid(
-                row=index + 1,
+                row=line + 1,
                 column=1,
                 sticky="w",
             )
+            line += 1
 
     def create_widgets(self):
         """Create all widgets from the populated path objects list that we have gotten"""
 
-        for path_object, _ in self.path_object_list:
-            # used to represent value of checkbox , 1 or 0, set default to selected
+        for index, (path_object, _) in enumerate(self.path_object_list):
+            # used to represent value of checkbox, 1 or 0, set default to 1
             int_var = tk.IntVar(value=1)
             check_button = tk.Checkbutton(
                 self.canvas_frame,
                 text=path_object.name,
                 variable=int_var,
                 bg="yellow",
-                command=self.check_button_callback(len(self.check_button_list)),
+                command=lambda index=index: self.check_button_callback(index),
             )
             # set int_var as attribute of check_button
             check_button.val = int_var
@@ -154,39 +254,20 @@ class ItemList(object):
             self.check_button_list.append(check_button)
             self.lbl_renamed_list.append(lbl_renamed)
 
-    def option_make_uppercase(self, value):
-        return value.upper()
-
-    def option_make_lowercase(self, value):
-        return value.lower()
-
-    def option_make_titlecase(self, value):
-        return value.titlecase()
-
-    def option_item_name_(self, pathlib_object):
-        return pathlib_object.stem
-
-    def option_item_extension(self, pathlib_object):
-        return pathlib_object.suffix
-
-    def option_enumerate_item(self, pathlib_object, index):
+    def update_options(self, options):
         """
-        Appends a numeric suffix to file names that were modified in the operation. For example: test.jpg -> test (1).jpg
+        Update the options that are selected
         """
-
-        # if item name is test.tar.gz, it should be renamed to test (1).tar.gz instead of test.tar (1).gz
-        path_suffixes = pathlib_object.suffixes
-        value = f"pathlib_object.stem ({index})" + "".join(path_suffixes)
-        return value
-
-    def update_option(self, options, rules):
-        print(f"update option: {options}")
-        for index, option in enumerate(options):
-            if option.get():
-                print(rules[index])
+        logging.info("called")
+        self.selected_options = options
+        self.update_renamed()
+        self.update_renaming_count()
 
     def get_items(self):
-        self.__get_items(
+        """
+        Populate the UI with initial state of the progralm, i.e. all file/folder names in the directory of where this program was runned
+        """
+        self._get_items(
             pathlib.Path("C:/Users/kahkeong/Desktop/Code/power-rename-clone/test"), 0
         )
         self.create_widgets()
@@ -197,20 +278,20 @@ class ItemList(object):
         self.canvas_frame.update_idletasks()
         self.scroll_bar_frame.on_canvas_configure(None)
 
-    def __get_items(self, path, level):
+    def _get_items(self, path, level):
         """
         Starting from root, get_items go into sub folders and retrieve the pathlib object that represent each of the folders and files.
         By default, process the folders first before files
 
         Keyword arguments:
         path - path object of a folder
-        level - level of this folder starting from root
+        level - level of this folder starting from the directory of where this program was runned
         """
         dir_path_objects = [x for x in path.iterdir() if x.is_dir()]
         for dir_path_object in dir_path_objects:
             self.path_object_list.append((dir_path_object, level))
             new_path = pathlib.Path(f"{dir_path_object.resolve()}")
-            self.__get_items(new_path, level + 1)
+            self._get_items(new_path, level + 1)
 
         file_path_objects = [x for x in path.iterdir() if x.is_file()]
         for file_path_object in file_path_objects:

@@ -1,4 +1,5 @@
 import tkinter as tk
+import logging
 from item_list import ItemList
 from preview_frame import PreviewFrame
 from bottom_frame import BottomFrame
@@ -7,12 +8,16 @@ from search_frame import SearchFrame
 from option_frame import OptionFrame
 
 
+logging.basicConfig(
+    level=logging.DEBUG,
+    format="file: %(filename)s, funcname: %(funcName)s, message: %(message)s",
+)
+
 window = tk.Tk()
 window.title("PowerRename Clone")
 
 window.columnconfigure(0, minsize=300, weight=1)
 window.rowconfigure(2, minsize=300, weight=1)
-print("hello")
 
 
 item_list = ItemList()

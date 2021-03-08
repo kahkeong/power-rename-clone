@@ -1,4 +1,7 @@
 import tkinter as tk
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class PreviewFrame(tk.LabelFrame):
@@ -30,7 +33,12 @@ class PreviewFrame(tk.LabelFrame):
         self.internal_frame.grid_columnconfigure(0, weight=1)
         self.internal_frame.grid_columnconfigure(1, weight=1)
 
-        self.lbl_original = tk.Label(master=self.internal_frame, text="Original")
+        self.lbl_original = tk.Button(
+            master=self.internal_frame,
+            text="Original",
+            bd=5,
+            command=self.on_click_original,
+        )
         self.lbl_original.grid(row=0, column=0, sticky="ew")
 
         self.lbl_renamed = tk.Button(
@@ -59,20 +67,23 @@ class PreviewFrame(tk.LabelFrame):
         self.internal_frame.bind("<Configure>", self.on_frame_configure)
         self.canvas.bind("<Configure>", self.on_canvas_configure)
 
+    def on_click_original(self):
+        logging.info("called")
+        self.item_list.update_show_checked_only()
+
     def on_click_renamed(self):
-        print("renamed clicked")
-        self.item_list.update_filter()
-        pass
+        logging.info("called")
+        self.item_list.update_show_renamed_only()
 
     def on_mouse_wheel(self, event):
         self.canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
 
-    def on_frame_configure(self, event):
+    def on_frame_configure(self, _event):
         # Reset the scroll region to encompass the inner internal_frame
         # print("on_frame_configure")
         self.canvas.configure(scrollregion=self.canvas.bbox("all"))
 
-    def on_canvas_configure(self, event):
+    def on_canvas_configure(self, _event):
         # Resize the inner frame to match the canvas
         min_width = self.internal_frame.winfo_reqwidth()
         min_height = self.internal_frame.winfo_reqheight()
