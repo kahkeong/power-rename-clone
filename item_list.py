@@ -87,13 +87,6 @@ class ItemList(object):
             if not match:
                 logging.info("file name: {item_name} has no match for search input")
 
-            # if one of the following options are valid, means we actually edited either the name (stem) or the extension path,
-            # so we need to add back the name (stem) or the extension
-            if "Item Name Only" in self.selected_options:
-                new_name = new_name + path_object.suffix
-            elif "Item Extension Only" in self.selected_options:
-                new_name = path_object.stem + new_name
-
             # Note, even if there are no matches, if any one of the case change options match, we will still rename the original name
             if "Make Uppercase" in self.selected_options:
                 if new_name != new_name.upper():
@@ -102,14 +95,31 @@ class ItemList(object):
                 if new_name != new_name.lower():
                     new_name = new_name.lower()
             elif "Make Titlecase" in self.selected_options:
-                if new_name != new_name.title():
+                old_path = path_object
+                # titlecase should have no effect on item extension
+                if old_path.stem != new_name.title():
                     new_name = new_name.title()
 
+            # if one of the following options are valid, means we actually edited either the name (stem) or the extension path,
+            # so we need to add back the name (stem) or the extension
+            if "Item Name Only" in self.selected_options:
+                new_name = new_name + path_object.suffix
+            elif "Item Extension Only" in self.selected_options:
+                new_name = path_object.stem + new_name
+
             if "Enumerate Items" in self.selected_options:
+                # only apply to name that will be renamed
                 if new_name != item_name:
                     # making the new_name as Path object just to get the stem and suffix more easily
                     new_path = pathlib.Path(new_name)
-                    new_name = f"{new_path.stem} ({enumerate_index}){new_path.suffix}"
+
+                    # special consideration for name start with "." like ".gitignore", path_instance.stem() return ".gitignore" instead of empty
+                    if new_path.stem[0] == ".":
+                        new_name = f"({enumerate_index}){new_name}"
+                    else:
+                        new_name = (
+                            f"{new_path.stem} ({enumerate_index}){new_path.suffix}"
+                        )
                     enumerate_index += 1
 
             if new_name != item_name:
@@ -127,6 +137,7 @@ class ItemList(object):
         """
         self.search = value
         self.update_renamed()
+        self.update_display_widgets()
         self.update_renaming_count()
 
     def update_replace(self, value):
@@ -167,9 +178,9 @@ class ItemList(object):
         logging.info(f"button, {check_button['text']} clicked")
 
         self.update_renamed()
+        self.update_display_widgets()
         self.update_selected_count()
         self.update_renaming_count()
-        self.display_widgets()
 
     def update_show_renamed_only(self):
         """
@@ -179,7 +190,7 @@ class ItemList(object):
         # only one of them can be True at any time
         self.show_renamed_only = not self.show_renamed_only
         self.show_checked_only = False
-        self.display_widgets()
+        self.update_display_widgets()
         self.update_renaming_count()
 
     def update_show_checked_only(self):
@@ -190,9 +201,9 @@ class ItemList(object):
         # only one of them can be True at any time
         self.show_checked_only = not self.show_checked_only
         self.show_renamed_only = False
-        self.display_widgets()
+        self.update_display_widgets()
 
-    def display_widgets(self):
+    def update_display_widgets(self):
         """Display the items in both original and renamed columns"""
         logging.info("called")
 
@@ -261,6 +272,7 @@ class ItemList(object):
         logging.info("called")
         self.selected_options = options
         self.update_renamed()
+        self.update_display_widgets()
         self.update_renaming_count()
 
     def get_items(self):
@@ -272,7 +284,7 @@ class ItemList(object):
             0,
         )
         self.create_widgets()
-        self.display_widgets()
+        self.update_display_widgets()
         self.update_selected_count()
         self.update_renaming_count()
         # ensure the UI is updated
