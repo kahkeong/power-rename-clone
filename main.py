@@ -3,7 +3,6 @@ import logging
 from item_list import ItemList
 from preview_frame import PreviewFrame
 from bottom_frame import BottomFrame
-from debug_frame import DebugFrame
 from search_frame import SearchFrame
 from option_frame import OptionFrame
 
@@ -45,8 +44,6 @@ frame_bottom_bar = BottomFrame(parent_object=window, background="yellow")
 item_list.lbl_items_selected = frame_bottom_bar.lbl_items_selected
 item_list.lbl_items_renaming = frame_bottom_bar.lbl_items_renaming
 
-# debug frame
-frame_debug = DebugFrame(item_list=item_list, parent_object=window, background="gray")
 
 item_list.get_items()
 window.mainloop()
