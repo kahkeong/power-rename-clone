@@ -1,8 +1,6 @@
 import tkinter as tk
 import logging
 
-logger = logging.getLogger(__name__)
-
 
 class PreviewFrame(tk.LabelFrame):
     def __init__(self, item_list, parent_object):
@@ -66,11 +64,11 @@ class PreviewFrame(tk.LabelFrame):
         self.canvas.bind("<Configure>", self.on_canvas_configure)
 
     def on_click_original(self):
-        logging.info("called")
+        logging.debug("called")
         self.item_list.update_show_checked_only()
 
     def on_click_renamed(self):
-        logging.info("called")
+        logging.debug("called")
         self.item_list.update_show_renamed_only()
 
     def on_mouse_wheel(self, event):

@@ -1,7 +1,10 @@
+from os import rename
 import tkinter as tk
 import pathlib
 import logging
 import re
+import helper
+import datetime
 
 
 class ItemList(object):
@@ -10,6 +13,8 @@ class ItemList(object):
         self.lbl_renamed_list = []
         self.path_object_list = []
         self.selected_options = []
+        # if path object in this dict, means it shall be renamed
+        self.path_object_to_renamed_path_object = {}
         self.search = ""
         self.replace = ""
         self.show_checked_only = False
@@ -21,11 +26,12 @@ class ItemList(object):
         self.lbl_items_selected = None
         self.lbl_items_renaming = None
 
-    def update_renamed(self):
+    def update_rename_column(self):
         """
         Update the list of items that are showing at the renamed column based on the selected options, the searched value and replace with value
         """
         enumerate_index = 1
+        self.path_object_to_renamed_path_object.clear()
 
         for (path_object, level), check_button, label in zip(
             self.path_object_list, self.check_button_list, self.lbl_renamed_list
@@ -34,9 +40,6 @@ class ItemList(object):
             match = True
             item_name = check_button["text"]
             new_name = item_name
-
-            # We do filter according to below sequential code, if an item is filtered out, it means it is not eligible to be renamed
-            # Then, we check whether the file/dir match the "search" input, if there is no match, means there is nothing to rename for this file/dir
 
             # user did not select this file/dir to rename
             if not check_button.val.get():
@@ -51,7 +54,7 @@ class ItemList(object):
                 skip = True
 
             if skip:
-                logging.info(f"file name: {item_name} is skipped")
+                logging.debug(f"file name: {item_name} is skipped")
                 label.config(text="")
                 continue
 
@@ -85,7 +88,7 @@ class ItemList(object):
                         )
 
             if not match:
-                logging.info("file name: {item_name} has no match for search input")
+                logging.debug("file name: {item_name} has no match for search input")
 
             # Note, even if there are no matches, if any one of the case change options match, we will still rename the original name
             if "Make Uppercase" in self.selected_options:
@@ -123,10 +126,17 @@ class ItemList(object):
                     enumerate_index += 1
 
             if new_name != item_name:
-                logging.info(
+                logging.debug(
                     f"old name: {item_name} will be renamed to new name: {new_name}"
                 )
-                label.config(text=new_name)
+                new_name = helper.replace(path_object, new_name)
+                renamed_path_object = path_object.parent / new_name
+                self.path_object_to_renamed_path_object[
+                    path_object
+                ] = renamed_path_object
+                logging.debug(renamed_path_object.name)
+
+                label.config(text=renamed_path_object.name)
             else:
                 label.config(text="")
 
@@ -136,7 +146,7 @@ class ItemList(object):
         So we need the update the appropriate components.
         """
         self.search = value
-        self.update_renamed()
+        self.update_rename_column()
         self.update_display_widgets()
         self.update_renaming_count()
 
@@ -145,7 +155,7 @@ class ItemList(object):
         Update the replace value. Since no other components will be affected, we just need to update the renamed column.
         """
         self.replace = value
-        self.update_renamed()
+        self.update_rename_column()
 
     def update_selected_count(self):
         """
@@ -157,7 +167,7 @@ class ItemList(object):
                 total += 1
 
         self.lbl_items_selected.config(text=f"Items Selected: {total}")
-        logging.info(f"Selected count: {total}")
+        logging.debug(f"Selected count: {total}")
 
     def update_renaming_count(self):
         """
@@ -169,15 +179,15 @@ class ItemList(object):
                 total += 1
 
         self.lbl_items_renaming.config(text=f"Item Renaming: {total}")
-        logging.info(f"Renaming count: {total}")
+        logging.debug(f"Renaming count: {total}")
 
     def check_button_callback(self, index):
         """Callback for each check button in the original column """
 
         check_button = self.check_button_list[index]
-        logging.info(f"button, {check_button['text']} clicked")
+        logging.debug(f"button, {check_button['text']} clicked")
 
-        self.update_renamed()
+        self.update_rename_column()
         self.update_display_widgets()
         self.update_selected_count()
         self.update_renaming_count()
@@ -186,7 +196,7 @@ class ItemList(object):
         """
         Trigger to show all selected items or show only items that will be renamed
         """
-        logging.info("called")
+        logging.debug("called")
         # only one of them can be True at any time
         self.show_renamed_only = not self.show_renamed_only
         self.show_checked_only = False
@@ -197,7 +207,7 @@ class ItemList(object):
         """
         Trigger to show all items or show only checked items
         """
-        logging.info("called")
+        logging.debug("called")
         # only one of them can be True at any time
         self.show_checked_only = not self.show_checked_only
         self.show_renamed_only = False
@@ -205,7 +215,7 @@ class ItemList(object):
 
     def update_display_widgets(self):
         """Display the items in both original and renamed columns"""
-        logging.info("called")
+        logging.debug("called")
 
         # clear everything on the grid
         for _, (check_button, lbl_renamed, path_object) in enumerate(
@@ -232,7 +242,7 @@ class ItemList(object):
                 # +1 to exclude the first row which contain the columns name
                 row=line + 1,
                 column=0,
-                # more left padding for file in inner directories
+                # left padding for file in inner directories
                 ipadx=(20 * level,),
                 pady=1,
                 sticky="w",
@@ -243,6 +253,19 @@ class ItemList(object):
                 sticky="w",
             )
             line += 1
+
+    def rename(self):
+        for (
+            path_object,
+            renamed_path_object,
+        ) in self.path_object_to_renamed_path_object.items():
+            try:
+                path_object.rename(renamed_path_object)
+                logging.info(f"success: {path_object} renamed to {renamed_path_object}")
+            except:
+                logging.info(
+                    f"failed: {path_object} not able to rename to {renamed_path_object}"
+                )
 
     def create_widgets(self):
         """Create all widgets from the populated path objects list that we have gotten"""
@@ -269,9 +292,9 @@ class ItemList(object):
         """
         Update the options that are selected
         """
-        logging.info("called")
+        logging.debug("called")
         self.selected_options = options
-        self.update_renamed()
+        self.update_rename_column()
         self.update_display_widgets()
         self.update_renaming_count()
 
@@ -280,7 +303,7 @@ class ItemList(object):
         Populate the UI with initial state of the program, i.e. all file/folder names in the directory of where this program was runned
         """
         self._get_items(
-            pathlib.Path("C:/Users/kahkeong/Desktop/CKK/From work/multi-docker-master"),
+            pathlib.Path("C:/Users/kahkeong/Desktop/Code/power-rename-clone/test"),
             0,
         )
         self.create_widgets()

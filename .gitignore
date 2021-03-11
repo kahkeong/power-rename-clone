@@ -1,4 +1,5 @@
 .vscode
 test_*.py
 test
+test_backup
 __pycache__

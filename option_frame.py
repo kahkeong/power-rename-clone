@@ -1,8 +1,6 @@
 import tkinter as tk
 import logging
 
-logger = logging.getLogger(__name__)
-
 
 class OptionFrame(tk.LabelFrame):
     def __init__(self, item_list, parent_object):
@@ -100,7 +98,7 @@ class OptionFrame(tk.LabelFrame):
         else:
             self.selected_options.add(option)
 
-        logger.info(
+        logging.debug(
             f"newly selected option: {option}, enabled options: {self.selected_options}"
         )
 

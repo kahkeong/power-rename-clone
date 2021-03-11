@@ -3,9 +3,10 @@ import webbrowser
 
 
 class BottomFrame(tk.Frame):
-    def __init__(self, parent_object):
+    def __init__(self, item_list, parent_object):
         tk.Frame.__init__(self, parent_object, borderwidth=5)
         self.parent_object = parent_object
+        self.item_list = item_list
 
         self.grid(row=4, column=0, sticky="ew")
         self.grid_columnconfigure(0, weight=1)
@@ -17,9 +18,7 @@ class BottomFrame(tk.Frame):
         self.lbl_items_renaming.grid(row=1, column=0, sticky="w")
 
         self.btn_rename = tk.Button(
-            master=self,
-            text="Rename",
-            width=10,
+            master=self, text="Rename", width=10, command=self.rename
         )
         self.btn_rename.grid(row=0, column=1, sticky="e", rowspan=2, padx=10)
 
@@ -35,6 +34,9 @@ class BottomFrame(tk.Frame):
             master=self, text="Cancel", width=10, command=self.close_application
         )
         self.btn_cancel.grid(row=0, column=3, sticky="e", rowspan=2, padx=10)
+
+    def rename(self):
+        self.item_list.rename()
 
     def close_application(self):
         self.parent_object.destroy()
