@@ -278,12 +278,12 @@ class ItemList(object):
                 self.canvas_frame,
                 text=path_object.name,
                 variable=int_var,
-                bg="yellow",
+                bg="white",
                 command=lambda index=index: self.check_button_callback(index),
             )
             check_button.val = int_var
 
-            lbl_renamed = tk.Label(self.canvas_frame, text="", bg="green")
+            lbl_renamed = tk.Label(self.canvas_frame, text="", bg="white")
 
             self.check_button_list.append(check_button)
             self.lbl_renamed_list.append(lbl_renamed)
