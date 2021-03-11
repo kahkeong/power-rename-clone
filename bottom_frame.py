@@ -34,9 +34,18 @@ class BottomFrame(tk.Frame):
             master=self, text="Cancel", width=10, command=self.close_application
         )
         self.btn_cancel.grid(row=0, column=3, sticky="e", rowspan=2, padx=10)
+        self.update_btn_rename_state(0)
+
+    def update_btn_rename_state(self, count):
+        if count > 0:
+            state = "normal"
+        else:
+            state = "disable"
+        self.btn_rename["state"] = state
 
     def rename(self):
         self.item_list.rename()
+        self.parent_object.destroy()
 
     def close_application(self):
         self.parent_object.destroy()

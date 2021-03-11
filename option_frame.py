@@ -15,7 +15,7 @@ class OptionFrame(tk.LabelFrame):
         self.grid(row=1, column=0, sticky="ew", padx=10, pady=10)
         self.buttons = {}
         self.alist = [
-            "Use Regular Expressions",
+            # "Use Regular Expressions",
             "Match All Occurences",
             "Case Sensitive",
             "Enumerate Items",

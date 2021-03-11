@@ -52,14 +52,14 @@ def run(path_object):
 
     # preview frame
     frame_preview = PreviewFrame(item_list=item_list, parent_object=window)
-    item_list.canvas_frame = frame_preview.internal_frame
-    item_list.scroll_bar_frame = frame_preview
 
     # bottom bar frame
     frame_bottom_bar = BottomFrame(item_list=item_list, parent_object=window)
 
-    item_list.lbl_items_selected = frame_bottom_bar.lbl_items_selected
-    item_list.lbl_items_renaming = frame_bottom_bar.lbl_items_renaming
+    item_list.canvas_frame = frame_preview.internal_frame
+    item_list.scroll_bar_frame = frame_preview
+    item_list.bottom_frame = frame_bottom_bar
+    frame_bottom_bar.item_list = item_list
 
     item_list.get_items()
     window.mainloop()

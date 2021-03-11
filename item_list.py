@@ -24,8 +24,7 @@ class ItemList(object):
         # reference to objects from other classes assigned at main.py
         self.canvas_frame = None
         self.scroll_bar_frame = None
-        self.lbl_items_selected = None
-        self.lbl_items_renaming = None
+        self.bottom_frame = None
 
     def update_rename_column(self):
         """
@@ -66,7 +65,7 @@ class ItemList(object):
                 new_name = path_object.suffix
 
             if "Case Sensitive" in self.selected_options:
-                if self.search in new_name:
+                if self.search != "" and self.search in new_name:
                     match = True
                     if "Match All Occurences" in self.selected_options:
                         new_name = new_name.replace(self.search, self.replace)
@@ -75,7 +74,9 @@ class ItemList(object):
             else:
                 # since regex is not enabled, escape all special characters
                 search_name = re.escape(self.search)
-                if re.search(search_name, new_name, flags=re.IGNORECASE):
+                if search_name != "" and re.search(
+                    search_name, new_name, flags=re.IGNORECASE
+                ):
                     match = True
                     if "Match All Occurences" in self.selected_options:
                         new_name = re.sub(
@@ -165,7 +166,7 @@ class ItemList(object):
             if check_button.val.get():
                 total += 1
 
-        self.lbl_items_selected.config(text=f"Items Selected: {total}")
+        self.bottom_frame.lbl_items_selected.config(text=f"Items Selected: {total}")
         logging.debug(f"Selected count: {total}")
 
     def update_renaming_count(self):
@@ -177,7 +178,8 @@ class ItemList(object):
             if label["text"] != "":
                 total += 1
 
-        self.lbl_items_renaming.config(text=f"Item Renaming: {total}")
+        self.bottom_frame.lbl_items_renaming.config(text=f"Item Renaming: {total}")
+        self.bottom_frame.update_btn_rename_state(total)
         logging.debug(f"Renaming count: {total}")
 
     def check_button_callback(self, index):
