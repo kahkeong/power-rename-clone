@@ -8,7 +8,8 @@ import datetime
 
 
 class ItemList(object):
-    def __init__(self):
+    def __init__(self, path_object):
+        self.path_to_run = path_object
         self.check_button_list = []
         self.lbl_renamed_list = []
         self.path_object_list = []
@@ -64,11 +65,9 @@ class ItemList(object):
             elif "Item Extension Only" in self.selected_options:
                 new_name = path_object.suffix
 
-            # built-in "in" function is case sensitive by default
             if "Case Sensitive" in self.selected_options:
                 if self.search in new_name:
                     match = True
-                    # by default, build in function "replace" will replace all occurences
                     if "Match All Occurences" in self.selected_options:
                         new_name = new_name.replace(self.search, self.replace)
                     else:
@@ -280,7 +279,6 @@ class ItemList(object):
                 bg="yellow",
                 command=lambda index=index: self.check_button_callback(index),
             )
-            # set int_var as attribute of check_button
             check_button.val = int_var
 
             lbl_renamed = tk.Label(self.canvas_frame, text="", bg="green")
@@ -303,7 +301,7 @@ class ItemList(object):
         Populate the UI with initial state of the program, i.e. all file/folder names in the directory of where this program was runned
         """
         self._get_items(
-            pathlib.Path("C:/Users/kahkeong/Desktop/Code/power-rename-clone/test"),
+            pathlib.Path(self.path_to_run),
             0,
         )
         self.create_widgets()

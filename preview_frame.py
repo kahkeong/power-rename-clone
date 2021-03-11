@@ -76,7 +76,6 @@ class PreviewFrame(tk.LabelFrame):
 
     def on_frame_configure(self, _event):
         # Reset the scroll region to encompass the inner internal_frame
-        # print("on_frame_configure")
         self.canvas.configure(scrollregion=self.canvas.bbox("all"))
 
     def on_canvas_configure(self, _event):
